@@ -10,6 +10,7 @@ exports.router = (function(){
     apiRouter.route("/users/login/").post(usersCtrl.login);
     // Récupérer les infos de l'utilisateur
     apiRouter.route('/users/me/').get(usersCtrl.getUserProfile);
+    apiRouter.route('/users/me/').put(usersCtrl.updateUserProfile);
 
     return apiRouter
 })(); 
