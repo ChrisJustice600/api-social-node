@@ -3,8 +3,9 @@ const jwtUtils = require("../utils/jwt.utils");
 const models = require("../models");
 
 // Constants
-const EMAIL_REGEX     = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-const PASSWORD_REGEX  = /^(?=.*\d).{4,8}$/;
+const EMAIL_REGEX =
+  /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const PASSWORD_REGEX = /^(?=.*\d).{4,8}$/;
 
 // Routes
 module.exports = {
@@ -21,7 +22,9 @@ module.exports = {
 
     // Vérification de la longueur du pseudo, l'email et le mot de passe
     if (username.length < 5 || username.length > 12) {
-      return res.status(400).json({ error: "wrong username length (must be 5-12)" });
+      return res
+        .status(400)
+        .json({ error: "wrong username length (must be 5-12)" });
     }
 
     if (!EMAIL_REGEX.test(email)) {
@@ -108,14 +111,14 @@ module.exports = {
     if (userId < 0) {
       return res.status(400).json({ error: "wrong token" });
     }
-  
+
     try {
       // Recherche de l'utilisateur par id
       const user = await models.User.findOne({
         attributes: ["id", "email", "username", "bio"],
         where: { id: userId },
       });
-  
+
       if (user) {
         return res.status(201).json(user);
       } else {
@@ -125,41 +128,40 @@ module.exports = {
       console.error(err);
       return res.status(500).json({ error: "cannot fetch user" });
     }
-    },
-  
-    updateUserProfile: async (req, res) => {
-      // Récupération du header d'authentification
-      const headerAuth = req.headers["authorization"];
-      const userId = jwtUtils.getUserId(headerAuth);
-  
-      // Paramètre bio
-      const bio = req.body.bio;
-  
-      try {
-        // Recherche de l'utilisateur par id
-        const userFound = await models.User.findOne({
-          attributes: ["id", "bio"],
+  },
+
+  updateUserProfile: async (req, res) => {
+    // Récupération du header d'authentification
+    const headerAuth = req.headers["authorization"];
+    const userId = jwtUtils.getUserId(headerAuth);
+
+    // Paramètre bio
+    const bio = req.body.bio;
+
+    try {
+      // Recherche de l'utilisateur par id //
+      const userFound = await models.User.findOne({
+        attributes: ["id", "bio"],
+        where: { id: userId },
+      });
+
+      if (userFound) {
+        // Mise à jour de l'utilisateur (bio)
+        await userFound.update({ bio: bio || userFound.bio });
+
+        // Récupération de l'utilisateur mis à jour pour renvoyer les données complètes
+        const updatedUser = await models.User.findOne({
+          attributes: ["id", "email", "username", "bio"],
           where: { id: userId },
         });
-  
-        if (userFound) {
-          // Mise à jour de l'utilisateur (bio)
-          await userFound.update({ bio: bio || userFound.bio });
-  
-          // Récupération de l'utilisateur mis à jour pour renvoyer les données complètes
-          const updatedUser = await models.User.findOne({
-            attributes: ["id", "email", "username", "bio"],
-            where: { id: userId },
-          });
-  
-          return res.status(201).json(updatedUser);
-        } else {
-          return res.status(404).json({ error: "user not found" });
-        }
-      } catch (err) {
-        console.error(err);
-        return res.status(500).json({ error: "cannot update user profile" });
+
+        return res.status(201).json(updatedUser);
+      } else {
+        return res.status(404).json({ error: "user not found" });
       }
-    },
-  };
-  
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "cannot update user profile" });
+    }
+  },
+};
